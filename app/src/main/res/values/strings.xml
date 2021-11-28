@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">NewsAggregator</string>
+    <string name="drawer_open">Open navigation drawer</string>
+    <string name="drawer_close">Close navigation drawer</string>
+    <string name="topics">Topics</string>
+    <string name="languages">Languages</string>
+    <string name="countries">Countries</string>
+</resources>
