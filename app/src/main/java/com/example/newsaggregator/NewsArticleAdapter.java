@@ -65,21 +65,8 @@ public class NewsArticleAdapter extends RecyclerView.Adapter<NewsArticleViewHold
             }
         });
 
-        try {
-            DateTimeFormatter timeFormatter = DateTimeFormatter.ISO_INSTANT;
-            TemporalAccessor accessor = timeFormatter.parse(newsArticle.getPublishedAt());
-
-            Date date = Date.from(Instant.from(accessor));
-            System.out.println(date);
-
-            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("LLL dd, yyyy kk:mm");
-            LocalDateTime localDateTime =
-                    LocalDateTime.ofInstant(Instant.from(accessor), ZoneId.systemDefault());
-            String dategot = localDateTime.format(dateTimeFormatter);
-            holder.articleDate.setText(dategot);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        String dategot = getFormattedDateFromString(newsArticle.getPublishedAt());
+        holder.articleDate.setText(dategot);
 
         holder.articleAuthors.setText(newsArticle.getAuthor());
 
@@ -114,11 +101,40 @@ public class NewsArticleAdapter extends RecyclerView.Adapter<NewsArticleViewHold
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setData(Uri.parse(url));
         mainActivity.startActivity(intent);
-
     }
 
     @Override
     public int getItemCount() {
         return newsArticles.size();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public String getFormattedDateFromString(String publishedAt) {
+        String dategot = "";
+        try {
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ISO_INSTANT;
+            TemporalAccessor accessor = timeFormatter.parse(publishedAt);
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("LLL dd, yyyy kk:mm");
+            LocalDateTime localDateTime =
+                    LocalDateTime.ofInstant(Instant.from(accessor), ZoneId.systemDefault());
+            dategot = localDateTime.format(dateTimeFormatter);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if(dategot.isEmpty()) {
+            try {
+                DateTimeFormatter timeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+                TemporalAccessor accessor = timeFormatter.parse(publishedAt);
+                DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("LLL dd, yyyy kk:mm");
+                LocalDateTime localDateTime =
+                        LocalDateTime.ofInstant(Instant.from(accessor), ZoneId.systemDefault());
+                dategot = localDateTime.format(dateTimeFormatter);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return dategot;
     }
 }

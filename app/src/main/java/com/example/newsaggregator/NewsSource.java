@@ -3,10 +3,12 @@ package com.example.newsaggregator;
 import androidx.annotation.NonNull;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 public class NewsSource implements Serializable {
     private String id;
-    private String name;
+    private String name = "";
     private String description;
     private String url;
     private String category;
@@ -15,6 +17,9 @@ public class NewsSource implements Serializable {
     private String countryCode;
     private String countryName;
     private String colorCode;
+    private List<NewsArticle> newsArticles = new ArrayList<>();
+
+    public NewsSource() { }
 
     public NewsSource(String id, String name, String description, String url, String category,
                       String languageCode, String countryCode) {
@@ -26,6 +31,8 @@ public class NewsSource implements Serializable {
         this.languageCode = languageCode;
         this.countryCode = countryCode;
     }
+
+
 
     public String getId() {
         return id;
@@ -105,6 +112,14 @@ public class NewsSource implements Serializable {
 
     public void setColorCode(String colorCode) {
         this.colorCode = colorCode;
+    }
+
+    public List<NewsArticle> getNewsArticles() {
+        return newsArticles;
+    }
+
+    public void setNewsArticles(List<NewsArticle> newsArticles) {
+        this.newsArticles = newsArticles;
     }
 
     @NonNull

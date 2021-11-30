@@ -36,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private final List<NewsSource> newsSources = new ArrayList<>();
     private final List<NewsSource> originalNewSources = new ArrayList<>();
-    private List<NewsArticle> newsArticles = new ArrayList<>();
+    private final List<NewsArticle> newsArticles = new ArrayList<>();
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
     private ActionBarDrawerToggle mDrawerToggle;
@@ -46,7 +46,8 @@ public class MainActivity extends AppCompatActivity {
     private NewsArticleAdapter newsArticleAdapter;
     private Map<String, String> menuSubMenuFilterMap = new HashMap<>();
     private Map<String, Map<String, String>> optionMenus = new HashMap<>();
-    private NewsSource currentNewsSource;
+    private NewsSource currentNewsSource = new NewsSource();
+    private RotateData rotateData;
     private int articlePosition = 0;
     private int topicId = 0;
     private int languageId = 1;
@@ -59,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setTitle("News Gateway");
         setContentView(R.layout.activity_main);
-        setDrawer();
+        setDrawer(savedInstanceState);
 
         newsArticleAdapter = new NewsArticleAdapter(this, newsArticles);
         viewPager = findViewById(R.id.viewPager);
@@ -69,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
         menuSubMenuFilterMap.put(getString(R.string.countries), "all");
     }
 
-    private void setDrawer() {
+    private void setDrawer(Bundle savedInstanceState) {
         mDrawerLayout = findViewById(R.id.drawer_layout);
         mDrawerList = findViewById(R.id.left_drawer);
 
@@ -98,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
         );
 
         // Load the data
-        if (Utilities.isNetworkConnectionAvailable(this)) {
+        if (Utilities.isNetworkConnectionAvailable(this) && savedInstanceState == null) {
             NewsSourcesApiRunnable newsSourcesApiRunnable = new NewsSourcesApiRunnable(this);
             new Thread(newsSourcesApiRunnable).start();
         }
@@ -109,6 +110,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void updateNewsResourcesAndCreateMenu(List<NewsSource> newsSources) {
+        this.originalNewSources.clear();
         this.originalNewSources.addAll(newsSources);
         Utilities.updateCountryNameAndLanguageName(this, this.originalNewSources);
         optionMenus = Utilities.getMenuOptions(this, this.originalNewSources);
@@ -175,9 +177,7 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
-        if (item.hasSubMenu()) {
-            this.menuSubMenuFilterMap.put(item.getTitle().toString(), "");
-        } else {
+        if (!item.hasSubMenu()) {
             String title = item.getTitle().toString();
             if(item.getItemId() == topicId) {
                 this.menuSubMenuFilterMap.put(getString(R.string.topics), title);
@@ -195,6 +195,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         this.optMenu = menu;
+        if(this.rotateData != null) {
+            updateNewsResourcesAndCreateMenu(this.rotateData.getNewsSources());
+            if(this.rotateData.getCurrentNewsArticles().size() > 0) {
+                updateNewsArticles(this.currentNewsSource.getName(), this.rotateData.getCurrentNewsArticles());
+            }
+        }
+        this.rotateData = null;
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -258,12 +265,10 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        outState.putString(getString(R.string.topics), this.menuSubMenuFilterMap.get(getString(R.string.topics)));
-        outState.putString(getString(R.string.languages), this.menuSubMenuFilterMap.get(getString(R.string.languages)));
-        outState.putString(getString(R.string.countries), this.menuSubMenuFilterMap.get(getString(R.string.countries)));
-        outState.putInt("articlePosition", viewPager.getCurrentItem());
-        outState.putSerializable("currentNewsSource", this.currentNewsSource);
-
+        this.articlePosition = viewPager.getCurrentItem();
+        RotateData rotateData = new RotateData(this.menuSubMenuFilterMap, this.originalNewSources,
+                this.currentNewsSource, this.newsArticles, this.articlePosition);
+        outState.putSerializable("rotateData", rotateData);
         super.onSaveInstanceState(outState);
     }
 
@@ -271,20 +276,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onRestoreInstanceState(Bundle savedInstance) {
         super.onRestoreInstanceState(savedInstance);
-        String topics = (String) savedInstance.get(getString(R.string.topics));
-        String languages = (String) savedInstance.get(getString(R.string.languages));
-        String countries = (String) savedInstance.get(getString(R.string.countries));
-        this.menuSubMenuFilterMap.put(getString(R.string.topics), topics);
-        this.menuSubMenuFilterMap.put(getString(R.string.languages), languages);
-        this.menuSubMenuFilterMap.put(getString(R.string.countries), countries);
-        this.articlePosition = (int) savedInstance.get("articlePosition");
-        this.currentNewsSource = (NewsSource) savedInstance.getSerializable("currentNewsSource");
-        String source = currentNewsSource.getId();
-        String sourceName = currentNewsSource.getName();
-        if(Utilities.isNetworkConnectionAvailable(this)) {
-            NewsArticlesApiRunnable newsArticlesApiRunnable = new NewsArticlesApiRunnable(source, sourceName,this);
-            new Thread(newsArticlesApiRunnable).start();
-        }
-        mDrawerLayout.closeDrawer(mDrawerList);
+        RotateData rotateData = (RotateData) savedInstance.getSerializable("rotateData");
+        this.menuSubMenuFilterMap = rotateData.getMenuSubMenuFilterMap();
+        this.articlePosition = rotateData.getArticlePosition();
+        this.currentNewsSource = rotateData.getCurrentNewsSource();
+        this.rotateData = rotateData;
     }
 }

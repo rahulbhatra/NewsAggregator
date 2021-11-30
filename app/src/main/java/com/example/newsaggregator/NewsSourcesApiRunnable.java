@@ -18,7 +18,7 @@ import java.util.List;
 public class NewsSourcesApiRunnable implements Runnable {
     private static final String TAG = "NewsApiRunnable";
     private MainActivity mainActivity;
-    private static String NEWS_API_KEY = "9cd23f2ca9974d3abd048fcac823eac9";
+    private static String NEWS_API_KEY = "a9d28d61c1fa4d44aa4a47bc6814b4d9";
     private static String newSourcesUrl = "https://newsapi.org/v2/top-headlines/sources";
 
     public NewsSourcesApiRunnable(MainActivity mainActivity) {
